@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package yeying.api.router;
+
+option go_package = "yeying/api/router";
+
+import "google/api/annotations.proto";
+
+// 账单与额度（面向用户，复用现有 /dashboard 路由）
+service Billing {
+  // 对标 OpenAI Subscription：返回额度上限与有效期
+  rpc GetSubscription(GetSubscriptionRequest) returns (Subscription) {
+    option (google.api.http) = { get: "/dashboard/billing/subscription" };
+  }
+
+  // 对标 OpenAI Usage：返回已用额度
+  rpc GetUsage(GetUsageRequest) returns (Usage) {
+    option (google.api.http) = { get: "/dashboard/billing/usage" };
+  }
+}
+
+message GetSubscriptionRequest {}
+
+message GetUsageRequest {}
+
+message Subscription {
+  string object = 1;              // "billing_subscription"
+  bool has_payment_method = 2;
+  double soft_limit_usd = 3;
+  double hard_limit_usd = 4;
+  double system_hard_limit_usd = 5;
+  int64 access_until = 6;         // unix seconds
+}
+
+message Usage {
+  string object = 1;              // "list"
+  double total_usage = 2;         // follows existing controller logic ( *100 when currency mode on )
+}

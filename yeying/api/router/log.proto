@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package yeying.api.router;
+
+option go_package = "yeying/api/router";
+
+import "google/api/annotations.proto";
+
+// 日志（运营 & 自助）API 映射现有 /api/log 路由
+
+service LogAdmin {
+  // 管理员分页查询日志
+  rpc ListLogs(ListLogsRequest) returns (LogsResponse) {
+    option (google.api.http) = { get: "/api/log" };
+  }
+
+  // 管理员关键字搜索日志
+  rpc SearchLogs(KeywordRequest) returns (LogsResponse) {
+    option (google.api.http) = { get: "/api/log/search" };
+  }
+
+  // 管理员统计日志消耗（quota 汇总）
+  rpc GetLogsStat(LogsStatRequest) returns (LogsStatResponse) {
+    option (google.api.http) = { get: "/api/log/stat" };
+  }
+
+  // 管理员按时间删除历史日志
+  rpc DeleteHistoryLogs(DeleteLogsRequest) returns (DeleteLogsResponse) {
+    option (google.api.http) = { delete: "/api/log" };
+  }
+}
+
+service LogSelf {
+  // 当前用户分页查询自己的日志
+  rpc ListMyLogs(ListLogsRequest) returns (LogsResponse) {
+    option (google.api.http) = { get: "/api/log/self" };
+  }
+
+  // 当前用户按关键字搜索自己的日志
+  rpc SearchMyLogs(KeywordRequest) returns (LogsResponse) {
+    option (google.api.http) = { get: "/api/log/self/search" };
+  }
+
+  // 当前用户统计自身日志消耗（quota 汇总）
+  rpc GetMyLogsStat(LogsStatRequest) returns (LogsStatResponse) {
+    option (google.api.http) = { get: "/api/log/self/stat" };
+  }
+}
+
+message ListLogsRequest {
+  int32 p = 1; // page index, 0-based
+  int32 type = 2;
+  int64 start_timestamp = 3;
+  int64 end_timestamp = 4;
+  string model_name = 5;
+  string username = 6;   // 管理员可传
+  string token_name = 7;
+  int32 channel = 8;
+}
+
+message KeywordRequest {
+  string keyword = 1;
+}
+
+message LogsStatRequest {
+  int32 type = 1;
+  int64 start_timestamp = 2;
+  int64 end_timestamp = 3;
+  string token_name = 4;
+  string username = 5;
+  string model_name = 6;
+  int32 channel = 7;
+}
+
+message DeleteLogsRequest {
+  int64 target_timestamp = 1;
+}
+
+message LogsResponse {
+  bool success = 1;
+  string message = 2;
+  repeated LogEntry data = 3;
+}
+
+message LogsStatResponse {
+  bool success = 1;
+  string message = 2;
+  LogStat data = 3;
+}
+
+message DeleteLogsResponse {
+  bool success = 1;
+  string message = 2;
+  int64 data = 3; // rows affected
+}
+
+message LogStat {
+  int64 quota = 1;
+  // token 聚合尚未在现有接口返回，如后续需要可扩展
+}
+
+enum LogType {
+  LOG_TYPE_UNKNOWN = 0;
+  LOG_TYPE_TOPUP = 1;
+  LOG_TYPE_CONSUME = 2;
+  LOG_TYPE_MANAGE = 3;
+  LOG_TYPE_SYSTEM = 4;
+  LOG_TYPE_TEST = 5;
+}
+
+message LogEntry {
+  int32 id = 1;
+  int32 user_id = 2;
+  int64 created_at = 3;
+  LogType type = 4;
+  string content = 5;
+  string username = 6;
+  string token_name = 7;
+  string model_name = 8;
+  int32 quota = 9;
+  int32 prompt_tokens = 10;
+  int32 completion_tokens = 11;
+  int32 channel = 12;
+  string request_id = 13;
+  int64 elapsed_time = 14; // ms
+  bool is_stream = 15;
+  bool system_prompt_reset = 16;
+}

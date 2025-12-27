@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package yeying.api.router;
+
+option go_package = "yeying/api/router";
+
+import "google/api/annotations.proto";
+
+// 用户侧自助接口映射 /api/user 前缀
+service User {
+  // 获取当前用户信息
+  rpc GetSelf(GetSelfRequest) returns (UserInfoResponse) {
+    option (google.api.http) = { get: "/api/user/self" };
+  }
+
+  // 获取仪表盘数据（包含 quota、统计信息）
+  rpc GetDashboard(GetDashboardRequest) returns (UserDashboardResponse) {
+    option (google.api.http) = { get: "/api/user/dashboard" };
+  }
+
+  // 获取当前用户可用模型列表
+  rpc GetAvailableModels(GetAvailableModelsRequest) returns (AvailableModelsResponse) {
+    option (google.api.http) = { get: "/api/user/available_models" };
+  }
+
+  // 生成访问 Token（与现有 GET /api/user/token 行为一致）
+  rpc GenerateAccessToken(GenerateAccessTokenRequest) returns (GenerateAccessTokenResponse) {
+    option (google.api.http) = { get: "/api/user/token" };
+  }
+}
+
+message GetSelfRequest {}
+message GetDashboardRequest {}
+message GetAvailableModelsRequest {}
+message GenerateAccessTokenRequest {}
+
+message UserInfoResponse {
+  bool success = 1;
+  string message = 2;
+  UserInfo data = 3;
+}
+
+message UserDashboardResponse {
+  bool success = 1;
+  string message = 2;
+  UserDashboard data = 3;
+}
+
+message AvailableModelsResponse {
+  bool success = 1;
+  string message = 2;
+  repeated string data = 3;
+}
+
+message GenerateAccessTokenResponse {
+  bool success = 1;
+  string message = 2;
+  string data = 3; // token string
+}
+
+message UserInfo {
+  int32 id = 1;
+  string username = 2;
+  string display_name = 3;
+  int32 role = 4;
+  int32 status = 5;
+  string wallet_address = 6;
+}
+
+message UserDashboard {
+  // 控制器返回的字段结构在不同配置下会变化，此处预留常见字段并保持可扩展
+  int64 quota = 1;
+  int64 used_quota = 2;
+  int64 remain_quota = 3;
+  int64 token_count = 4;
+  int64 channel_count = 5;
+  int64 user_count = 6;
+  string currency = 7; // 若启用 DisplayInCurrencyEnabled，可用于标识展示单位
+  // 追加字段留待后续版本兼容（使用 proto3 可选或 oneof 扩展）
+}
